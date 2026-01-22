@@ -11,7 +11,7 @@ class VokabelGeneratorApp(ctk.CTk):
         super().__init__()
 
         self.iconbitmap(default=sys.executable)
-        #self.iconbitmap("icons/icon.ico")
+        #self.iconbitmap("icon.ico")
 
         # Fenster Setup
         self.title("Vokabulator")
@@ -374,7 +374,7 @@ MIT - Details siehe GitHub Repository
         
         self.log_message(f"Abgeschlossen in {duration:.1f}s - {count} Vokabeln")
         
-        self.download_frame.grid(row=3, column=0, sticky="ew", padx=10, pady=10)
+        self.download_frame.grid(row=4, column=0, sticky="ew", padx=10, pady=10)
         
         if has_by2:
             self.btn_download_by2.pack(fill="x", pady=3)
