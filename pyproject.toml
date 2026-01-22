@@ -1,0 +1,15 @@
+[project]
+name = "text2vocabs-gui"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "customtkinter>=5.2.2",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.0",
+    "pyinstaller>=6.18.0",
+    "requests>=2.32.5",
+    "termcolor>=3.3.0",
+    "tksheet>=7.5.19",
+]
