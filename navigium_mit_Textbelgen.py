@@ -51,7 +51,10 @@ def request2navigium(words=["currere"]):
         formated_answer = format.copy()
         try:
             formated_answer["grundform"] = answer["lemma"]
-            formated_answer["bedeutungen"] = answer["bedeutungsgruppe"][0]["bedeutungJoined"]
+            formated_answer["bedeutungen"] = []
+            for bedeutungsgruppe in answer["bedeutungsgruppe"]:
+                formated_answer["bedeutungen"].append(bedeutungsgruppe["bedeutungJoined"])
+            #formated_answer["bedeutungen"] = answer["bedeutungsgruppe"][0]["bedeutungJoined"]
             formated_answer["flexion"] = answer["flexion"]
             formated_answer["wortart"] = answer["wortart"]
             formated_answer["deponens"] = answer["deponens"]
@@ -152,7 +155,7 @@ def sort_by_wordtype(input):
         "ADV": "Adverbien",
         "PRON": "Pronomen",
         "KONJ": "Konjunktionen",
-        "PREP": "Präpositionen",
+        "PRAEP": "Präpositionen",
         "SUBJ": "Subjunktionen"
     }
 
@@ -181,28 +184,28 @@ def split_into_words(input, delete_special_characters=True):
 def identify_adjectives(word, NomGen, arg, failures, plural):
     for flexion in word["flexion"]:
         if flexion["form"] == f"AdjektivForm(NOM,SG,m,{arg})":
-            NomGen["Nom"]["m"] = flexion["wort"][0].replace("‑","")
+            NomGen["Nom"]["m"] = flexion["wort"][0].replace("‑","").lower()
             if not flexion["wort"][0].replace("‑","") == "":
                 failures -= 1
         if flexion["form"] == f"AdjektivForm(NOM,SG,f,{arg})":
-            NomGen["Nom"]["f"] = flexion["wort"][0].replace("‑","")
+            NomGen["Nom"]["f"] = flexion["wort"][0].replace("‑","").lower()
             if not flexion["wort"][0].replace("‑","") == "":
                 failures -= 1
         if flexion["form"] == f"AdjektivForm(NOM,SG,n,{arg})":
-            NomGen["Nom"]["n"] = flexion["wort"][0].replace("‑","")
+            NomGen["Nom"]["n"] = flexion["wort"][0].replace("‑","").lower()
             if not flexion["wort"][0].replace("‑","") == "":
                 failures -= 1
 
         if flexion["form"] == f"AdjektivForm(GEN,SG,m,{arg})":
-            NomGen["Gen"]["m"] = flexion["wort"][0].replace("‑","")
+            NomGen["Gen"]["m"] = flexion["wort"][0].replace("‑","").lower()
             if not flexion["wort"][0].replace("‑","") == "":
                 failures -= 1
         if flexion["form"] == f"AdjektivForm(GEN,SG,f,{arg})":
-            NomGen["Gen"]["f"] = flexion["wort"][0].replace("‑","")
+            NomGen["Gen"]["f"] = flexion["wort"][0].replace("‑","").lower()
             if not flexion["wort"][0].replace("‑","") == "":
                 failures -= 1
         if flexion["form"] == f"AdjektivForm(GEN,SG,n,{arg})":
-            NomGen["Gen"]["n"] = flexion["wort"][0].replace("‑","")
+            NomGen["Gen"]["n"] = flexion["wort"][0].replace("‑","").lower()
             if not flexion["wort"][0].replace("‑","") == "":
                 failures -= 1
     if failures == 6:
@@ -210,217 +213,362 @@ def identify_adjectives(word, NomGen, arg, failures, plural):
         plural = True
         for flexion in word["flexion"]:
             if flexion["form"] == f"AdjektivForm(NOM,PL,m,{arg})":
-                NomGen["Nom"]["m"] = flexion["wort"][0].replace("‑","")
+                NomGen["Nom"]["m"] = flexion["wort"][0].replace("‑","").lower()
                 if not flexion["wort"][0] == "":
                     failures -= 1
             if flexion["form"] == f"AdjektivForm(NOM,PL,f,{arg})":
-                NomGen["Nom"]["f"] = flexion["wort"][0].replace("‑","")
+                NomGen["Nom"]["f"] = flexion["wort"][0].replace("‑","").lower()
                 if not flexion["wort"][0] == "":
                     failures -= 1
             if flexion["form"] == f"AdjektivForm(NOM,PL,n,{arg})":
-                NomGen["Nom"]["n"] = flexion["wort"][0].replace("‑","")
+                NomGen["Nom"]["n"] = flexion["wort"][0].replace("‑","").lower()
                 if not flexion["wort"][0] == "":
                     failures -= 1
 
             if flexion["form"] == f"AdjektivForm(GEN,PL,m,{arg})":
-                NomGen["Gen"]["m"] = flexion["wort"][0].replace("‑","")
+                NomGen["Gen"]["m"] = flexion["wort"][0].replace("‑","").lower()
                 if not flexion["wort"][0] == "":
                     failures -= 1
             if flexion["form"] == f"AdjektivForm(GEN,PL,f,{arg})":
-                NomGen["Gen"]["f"] = flexion["wort"][0].replace("‑","")
+                NomGen["Gen"]["f"] = flexion["wort"][0].replace("‑","").lower()
                 if not flexion["wort"][0] == "":
                     failures -= 1
             if flexion["form"] == f"AdjektivForm(GEN,PL,n,{arg})":
-                NomGen["Gen"]["n"] = flexion["wort"][0].replace("‑","")
+                NomGen["Gen"]["n"] = flexion["wort"][0].replace("‑","").lower()
                 if not flexion["wort"][0] == "":
                     failures -= 1
     return NomGen, failures, plural
+
+def simple_vocabs(word, wortart_searchitem, wortart_singular, word_properties, anzahl_bedeutungen):
+    try:
+        if wortart_searchitem.lower() in word["flexion"][0]["form"].lower():
+            word_properties[wortart_singular] = " / ".join(word["flexion"][0]["wort"]).lower()
+    except:
+        None
+
+    word_properties = vocab_abschluss(word_properties, word, anzahl_bedeutungen)
+    return word_properties
+
+def simple_vocabs_full(vocabulary, input, wortart, anzahl_bedeutungen):
+    wortarten_searchitems = {
+        "Nomen": "Substantiv",
+        "Verben": "Verb",
+        "Adjektive": "Adjektiv",
+        "Adverbien": "Adverb",
+        "Pronomen": "Pronomen",
+        "Konjunktionen": "KONJUNKTION",
+        "Präpositionen": "PRAEPOSITION",
+        "Subjunktionen": "SUBJUNKTION",
+    }
+    wortarten_singular = {
+        "Nomen": "Nomen",
+        "Verben": "Verb",
+        "Adjektive": "Adjektiv",
+        "Adverbien": "Adverb",
+        "Pronomen": "Pronomen",
+        "Konjunktionen": "Konjunktion",
+        "Präpositionen": "Präposition",
+        "Subjunktionen": "Subjunktion",
+    }
+
+    for word in input[wortart]:
+        word_properties = {
+            wortarten_singular[wortart]: ""
+        }
+        word_properties = simple_vocabs(word, wortarten_searchitems[wortart], wortarten_singular[wortart], word_properties, anzahl_bedeutungen)
+
+        vocabulary[wortart].append(word_properties)
+    return vocabulary
 
 def cleanup_properties(properties):
     for key, property in properties.items():
         if property.replace(" ", "") == "":
             properties[key] = "-"
     return properties
-
-def advanced_formating(input):
+def vocab_abschluss(word_properties, word, anzahl_bedeutungen=1):
+    if anzahl_bedeutungen == 1:
+        word_properties["Bedeutung"] = word["bedeutungen"][0]
+    if anzahl_bedeutungen == 2:
+        word_properties["Bedeutung I."] = word["bedeutungen"][0]
+        if len(word["bedeutungen"]) > 1:
+            word_properties["Bedeutung II."] = word["bedeutungen"][1]
+        else:
+            word_properties["Bedeutung II."] = "-"
+    if anzahl_bedeutungen == 3:
+        word_properties["Bedeutung I."] = word["bedeutungen"][0]
+        if len(word["bedeutungen"]) > 1:
+            word_properties["Bedeutung II."] = word["bedeutungen"][1]
+        else:
+            word_properties["Bedeutung II."] = "-"
+        if len(word["bedeutungen"]) > 2:
+            word_properties["Bedeutung III."] = word["bedeutungen"][2]
+        else:
+            word_properties["Bedeutung III."] = "-"
+    word_properties["Textbelege"] = "; ".join(word["textbeleg"]).lower()
+    word_properties = cleanup_properties(word_properties)
+    return word_properties
+def advanced_formating(input, anzahl_bedeutungen=1, Nomen=True, Verben=True, Adjektive=True, Pronomen=True, Präpositionen=True, Adverbien=True, Konjunktionen=True, Subjunktionen=True, Unbekannt=True):
     vocabulary = {
-        "Nomen": [],#
-        "Verben": [],#
-        "Adjektive": [],#
-        "Adverbien": [],#
-        "Pronomen": [],#
-        "Konjunktionen": [],#
-        "Präpositionen": [],#
-        "Subjunktionen": [],#
-        "Unbekannt": []#
+        "Nomen": [],#r
+        "Verben": [],#r
+        "Adjektive": [],#r
+        "Pronomen": [],#r
+        "Präpositionen": [],#r
+        "Adverbien": [],#r
+        "Konjunktionen": [],#r
+        "Subjunktionen": [],#r
+        "Unbekannt": []#r
     }
-    for word in input["Nomen"]:
-        word_properties = {
-            "Nom. Sg.": "-",
-            "Gen. Sg.": "-",
-            "Genus": "-",
-            "Dekl.-Kl.": "-",
-            "Bedeutung": "-",
-            "Textbelege": "-"
-        }
-        failures = 2
-        for flexion in word["flexion"]:
-            if flexion["form"] == "SubstantivForm(NOM,SG)":
-                word_properties["Nom. Sg."] = flexion["wort"][0].replace("‑","")
-                if not flexion["wort"][0].replace("‑","") == "":
-                    failures -= 1
-            if flexion["form"] == "SubstantivForm(GEN,SG)":
-                word_properties["Gen. Sg."] = flexion["wort"][0].replace("‑","")
-                if not flexion["wort"][0].replace("‑","") == "":
-                    failures -= 1
-        if failures == 2:
+    if Nomen == True:
+        for word in input["Nomen"]:
+            word_properties = {
+                "Nom. Sg.": "-",
+                "Gen. Sg.": "-",
+                "Genus": "-",
+                "Dekl.-Kl.": "-"
+            }
             failures = 2
             for flexion in word["flexion"]:
-                if flexion["form"] == "SubstantivForm(NOM,PL)":
-                    word_properties["Nom. Sg."] = flexion["wort"][0].replace("‑","") + " (Pl.)"
+                if flexion["form"] == "SubstantivForm(NOM,SG)":
+                    word_properties["Nom. Sg."] = flexion["wort"][0].replace("‑","").lower()
                     if not flexion["wort"][0].replace("‑","") == "":
                         failures -= 1
-                if flexion["form"] == "SubstantivForm(GEN,PL)":
-                    word_properties["Gen. Sg."] = flexion["wort"][0].replace("‑","") + " (Pl.)"
+                if flexion["form"] == "SubstantivForm(GEN,SG)":
+                    word_properties["Gen. Sg."] = flexion["wort"][0].replace("‑","").lower()
                     if not flexion["wort"][0].replace("‑","") == "":
                         failures -= 1
-        
-        einzelne_worte = split_into_words([word["grundform"].replace("-", " - ")], delete_special_characters=False)
-        
-        if failures >= 2:
-            dice("Fehler: Keine Nominativ- oder Genitivform gefunden", einzelne_worte[0], "bad")
-
-        word_properties["Genus"] = einzelne_worte[-1]+"."
-        try:
-            if "Dritte Deklination".lower() in word["klassenlabel"].lower():
-                word_properties["Dekl.-Kl."] = "kons.-Dekl."
+            if failures == 2:
+                failures = 2
                 for flexion in word["flexion"]:
+                    if flexion["form"] == "SubstantivForm(NOM,PL)":
+                        word_properties["Nom. Sg."] = flexion["wort"][0].replace("‑","").lower() + " (Pl.)"
+                        if not flexion["wort"][0].replace("‑","") == "":
+                            failures -= 1
                     if flexion["form"] == "SubstantivForm(GEN,PL)":
-                        if flexion["wort"][0].endswith("ium"):
-                            word_properties["Dekl.-Kl."] = "gem.-Dekl."
-            else:
-                word_properties["Dekl.-Kl."] = word["klassenlabel"].replace(",", "").replace("(", "").replace(")", "")[:-7] + "."
-        except:
-            word_properties["Dekl.-Kl."] = "unbekannt"
-        word_properties["Bedeutung"] = word["bedeutungen"]
-        word_properties["Textbelege"] = "; ".join(word["textbeleg"])
-        
-        word_properties = cleanup_properties(word_properties)
+                        word_properties["Gen. Sg."] = flexion["wort"][0].replace("‑","").lower() + " (Pl.)"
+                        if not flexion["wort"][0].replace("‑","") == "":
+                            failures -= 1
+            
+            einzelne_worte = split_into_words([word["grundform"].replace("-", " - ")], delete_special_characters=False)
+            
+            if failures >= 2:
+                dice("Fehler: Keine Nominativ- oder Genitivform gefunden", einzelne_worte[0], "bad")
 
-        vocabulary["Nomen"].append(word_properties)
-
-    for word in input["Verben"]:
-        word_properties = {
-            "Infinitiv": "-",
-            "1. Ps. Sg. Präs. Ind. Akt.": "-",
-            "1. Ps. Sg. Perf. Ind. Akt.": "-",
-            "PPP": "-",
-            "Konj.": "-",
-            "Bedeutung": "-"
-        }
-
-        "InfinitivForm(PRAES,AKT)"
-        "VerbForm(P1,SG,PRAES,IND,AKT,m)"
-        "VerbForm(P1,SG,PERF,IND,AKT,m)"
-        "PartizipialForm(PPP,AdjektivForm(NOM,SG,n,POS))"
-
-        "VerbForm(P1,SG,PRAES,IND,DEP,m)"
-        if word["deponens"] == False:
-            for flexion in word["flexion"]:
-                if flexion["form"] == "InfinitivForm(PRAES,AKT)":
-                    word_properties["Infinitiv"] = flexion["wort"][0].replace("‑","")
-                if flexion["form"] == "VerbForm(P1,SG,PRAES,IND,AKT,m)":
-                    word_properties["1. Ps. Sg. Präs. Ind. Akt."] = flexion["wort"][0].replace("‑","")
-                if flexion["form"] == "VerbForm(P1,SG,PERF,IND,AKT,m)":
-                    word_properties["1. Ps. Sg. Perf. Ind. Akt."] = flexion["wort"][0].replace("‑","")
-                if flexion["form"] == "PartizipialForm(PPP,AdjektivForm(NOM,SG,n,POS))":
-                    word_properties["PPP"] = flexion["wort"][0].replace("‑","")
-        else:
-            for flexion in word["flexion"]:
-                if flexion["form"] == "InfinitivForm(PRAES,DEP)":
-                    word_properties["Infinitiv"] = flexion["wort"][0].replace("‑","")
-                if flexion["form"] == "VerbForm(P1,SG,PRAES,IND,DEP,m)":
-                    word_properties["1. Ps. Sg. Präs. Ind. Akt."] = flexion["wort"][0].replace("‑","")
-                if flexion["form"] == "VerbForm(P1,SG,PERF,IND,DEP,m)":
-                    word_properties["1. Ps. Sg. Perf. Ind. Akt."] = flexion["wort"][0].replace("‑","")
-                if flexion["form"] == "PartizipialForm(PPP,AdjektivForm(NOM,SG,n,POS))":
-                    word_properties["PPP"] = flexion["wort"][0].replace("‑","")
-
-        if "Verb".lower() in word["klassenlabel"].lower():
-            word_properties["Konj."] = "unbekannt"
-        elif word["deponens"] == True:
-            word_properties["Konj."] = "Deponens"
-        else:
-            word_properties["Konj."] = word["klassenlabel"].replace("ugation", ".")
-
-        word_properties["Bedeutung"] = word["bedeutungen"]
-        word_properties["Textbelege"] = "; ".join(word["textbeleg"])
-        word_properties = cleanup_properties(word_properties)
-
-        vocabulary["Verben"].append(word_properties)
-
-    for word in input["Adjektive"]:
-        word_properties = {
-            "Nom. Sg.: m./f./n.": "",
-            "Gen. Sg.: m./f./n.": "",
-            "Dekl.-Kl.": "-",
-            "Bedeutung": "-"
-        }
-
-        failures = 6
-        NomGen = {"Nom": {"m": "-", "f": "-", "n": "-"}, "Gen": {"m": "-", "f": "-", "n": "-"}}
-        arg = "POS"
-        plural = False
-        NomGen, failures, plural = identify_adjectives(word, NomGen, arg, failures, plural)
-        try:
-            if "Adjektiv".lower() in word["klassenlabel"].lower():
+            word_properties["Genus"] = einzelne_worte[-1]+"."
+            try:
+                if "Dritte Deklination".lower() in word["klassenlabel"].lower():
+                    word_properties["Dekl.-Kl."] = "kons.-Dekl."
+                    for flexion in word["flexion"]:
+                        if flexion["form"] == "SubstantivForm(GEN,PL)":
+                            if flexion["wort"][0].endswith("ium"):
+                                word_properties["Dekl.-Kl."] = "gem.-Dekl."
+                else:
+                    word_properties["Dekl.-Kl."] = word["klassenlabel"].replace(",", "").replace("(", "").replace(")", "")[:-7] + "."
+            except:
                 word_properties["Dekl.-Kl."] = "unbekannt"
-            elif "Dritte Deklination".lower() in word["klassenlabel"].lower():
-                word_properties["Dekl.-Kl."] = "kons.-Dekl."
+            
+            word_properties = vocab_abschluss(word_properties, word, anzahl_bedeutungen)
+
+            vocabulary["Nomen"].append(word_properties)
+    if Verben == True:
+        for word in input["Verben"]:
+            word_properties = {
+                "Infinitiv": "-",
+                "1. Ps. Sg. Präs. Ind. Akt.": "-",
+                "1. Ps. Sg. Perf. Ind. Akt.": "-",
+                "PPP": "-",
+                "Konj.": "-",
+            }
+
+            "InfinitivForm(PRAES,AKT)"
+            "VerbForm(P1,SG,PRAES,IND,AKT,m)"
+            "VerbForm(P1,SG,PERF,IND,AKT,m)"
+            "PartizipialForm(PPP,AdjektivForm(NOM,SG,n,POS))"
+
+            "VerbForm(P1,SG,PRAES,IND,DEP,m)"
+            if word["deponens"] == False:
                 for flexion in word["flexion"]:
-                    if flexion["form"] == "AdjektivForm(GEN,PL,m,POS)":
-                        if flexion["wort"][0].endswith("ium"):
-                            word_properties["Dekl.-Kl."] = "gem.-Dekl."
+                    if flexion["form"] == "InfinitivForm(PRAES,AKT)":
+                        word_properties["Infinitiv"] = " / ".join(flexion["wort"]).replace("‑","").lower()
+                    if flexion["form"] == "VerbForm(P1,SG,PRAES,IND,AKT,m)":
+                        word_properties["1. Ps. Sg. Präs. Ind. Akt."] = " / ".join(flexion["wort"]).replace("‑","").lower()
+                    if flexion["form"] == "VerbForm(P1,SG,PERF,IND,AKT,m)":
+                        word_properties["1. Ps. Sg. Perf. Ind. Akt."] = " / ".join(flexion["wort"]).replace("‑","").lower()
+                    if flexion["form"] == "PartizipialForm(PPP,AdjektivForm(NOM,SG,n,POS))":
+                        word_properties["PPP"] = " / ".join(flexion["wort"]).replace("‑","").lower()
             else:
-                word_properties["Dekl.-Kl."] = word["klassenlabel"].replace(",", "").replace("(", "").replace(")", "")[:-7] + "."
-        except:
-            word_properties["Dekl.-Kl."] = "unbekannt"
-        if failures == 6:
+                for flexion in word["flexion"]:
+                    if flexion["form"] == "InfinitivForm(PRAES,DEP)":
+                        word_properties["Infinitiv"] = " / ".join(flexion["wort"]).replace("‑","").lower()
+                    if flexion["form"] == "VerbForm(P1,SG,PRAES,IND,DEP,m)":
+                        word_properties["1. Ps. Sg. Präs. Ind. Akt."] = " / ".join(flexion["wort"]).replace("‑","").lower()
+                    if flexion["form"] == "VerbForm(P1,SG,PERF,IND,DEP,m)":
+                        word_properties["1. Ps. Sg. Perf. Ind. Akt."] = " / ".join(flexion["wort"]).replace("‑","").lower()
+                    if flexion["form"] == "PartizipialForm(PPP,AdjektivForm(NOM,SG,n,POS))":
+                        word_properties["PPP"] = " / ".join(flexion["wort"]).replace("‑","").lower()
+
+            if "Verb".lower() in word["klassenlabel"].lower():
+                word_properties["Konj."] = "unbekannt"
+            elif word["deponens"] == True:
+                word_properties["Konj."] = "Deponens"
+            else:
+                word_properties["Konj."] = word["klassenlabel"].replace("ugation", ".")
+
+            word_properties = vocab_abschluss(word_properties, word, anzahl_bedeutungen)
+
+            vocabulary["Verben"].append(word_properties)
+
+    if Adjektive == True:
+        for word in input["Adjektive"]:
+            word_properties = {
+                "Nom. Sg.: m./f./n.": "",
+                "Gen. Sg.: m./f./n.": "",
+                "Dekl.-Kl.": "-"
+            }
+            
             failures = 6
-            arg = "KOMP"
+            NomGen = {"Nom": {"m": "-", "f": "-", "n": "-"}, "Gen": {"m": "-", "f": "-", "n": "-"}}
+            arg = "POS"
             plural = False
             NomGen, failures, plural = identify_adjectives(word, NomGen, arg, failures, plural)
-            word_properties["Dekl.-Kl."] = "Komp."
+            try:
+                if "Adjektiv".lower() in word["klassenlabel"].lower():
+                    word_properties["Dekl.-Kl."] = "unbekannt"
+                elif "Dritte Deklination".lower() in word["klassenlabel"].lower():
+                    word_properties["Dekl.-Kl."] = "kons.-Dekl."
+                    for flexion in word["flexion"]:
+                        if flexion["form"] == "AdjektivForm(GEN,PL,m,POS)":
+                            if flexion["wort"][0].endswith("ium"):
+                                word_properties["Dekl.-Kl."] = "gem.-Dekl."
+                else:
+                    word_properties["Dekl.-Kl."] = word["klassenlabel"].replace(",", "").replace("(", "").replace(")", "")[:-7] + "."
+            except:
+                word_properties["Dekl.-Kl."] = "unbekannt"
             if failures == 6:
                 failures = 6
-                arg = "SUP"
+                arg = "KOMP"
                 plural = False
                 NomGen, failures, plural = identify_adjectives(word, NomGen, arg, failures, plural)
-                word_properties["Dekl.-Kl."] = "Sup."
+                word_properties["Dekl.-Kl."] = "Komp."
                 if failures == 6:
                     failures = 6
+                    arg = "SUP"
                     plural = False
-                    word_properties["Dekl.-Kl."] = "unbekannt"
-                    dice("Es konnten keine der Flexionen extrahiert werden", einzelne_worte[0], "bad")
+                    NomGen, failures, plural = identify_adjectives(word, NomGen, arg, failures, plural)
+                    word_properties["Dekl.-Kl."] = "Sup."
+                    if failures == 6:
+                        failures = 6
+                        plural = False
+                        word_properties["Dekl.-Kl."] = "unbekannt"
+                        dice("Es konnten keine der Flexionen extrahiert werden", einzelne_worte[0], "bad")
 
-        einzelne_worte = split_into_words([word["grundform"].replace("-", " - ")], delete_special_characters=False)
-        for key in NomGen:
-            NomGen[key] = ', '.join(NomGen[key].values())
-        if plural == True:
-            word_properties["Nom. Sg.: m./f./n."] = NomGen["Nom"] + " (Pl.)"
-            word_properties["Gen. Sg.: m./f./n."] = NomGen["Gen"] + " (Pl.)"
-        else:
-            word_properties["Nom. Sg.: m./f./n."] = NomGen["Nom"]
-            word_properties["Gen. Sg.: m./f./n."] = NomGen["Gen"]
+            einzelne_worte = split_into_words([word["grundform"].replace("-", " - ")], delete_special_characters=False)
+            for key in NomGen:
+                NomGen[key] = ', '.join(NomGen[key].values())
+            if plural == True:
+                word_properties["Nom. Sg.: m./f./n."] = NomGen["Nom"] + " (Pl.)"
+                word_properties["Gen. Sg.: m./f./n."] = NomGen["Gen"] + " (Pl.)"
+            else:
+                word_properties["Nom. Sg.: m./f./n."] = NomGen["Nom"]
+                word_properties["Gen. Sg.: m./f./n."] = NomGen["Gen"]
 
-        word_properties["Bedeutung"] = word["bedeutungen"]
-        word_properties["Textbelege"] = "; ".join(word["textbeleg"])
-        vocabulary["Adjektive"].append(word_properties)
+            word_properties = vocab_abschluss(word_properties, word, anzahl_bedeutungen)
+            vocabulary["Adjektive"].append(word_properties)
+    if Pronomen == True:
+        for word in input["Pronomen"]:
+            word_properties = {
+                "Nom. Sg.: m./f./n.": "",
+                "Gen. Sg.: m./f./n.": ""
+            }
+            failures = 6
+            NomGen = {"Nom": {"m": "-", "f": "-", "n": "-"}, "Gen": {"m": "-", "f": "-", "n": "-"}}
+            arg = "POS"
+            plural = False
+            NomGen, failures, plural = identify_adjectives(word, NomGen, arg, failures, plural)
 
-        word_properties = cleanup_properties(word_properties)
+            with open("test.json", "w", encoding="utf-8") as file:
+                json.dump(word, file, indent=4, ensure_ascii=False)
 
+                einzelne_worte = split_into_words([word["grundform"].replace("-", " - ")], delete_special_characters=False)
+                for key in NomGen:
+                    NomGen[key] = ', '.join(NomGen[key].values())
+                if plural == True:
+                    word_properties["Nom. Sg.: m./f./n."] = NomGen["Nom"] + " (Pl.)"
+                    word_properties["Gen. Sg.: m./f./n."] = NomGen["Gen"] + " (Pl.)"
+                else:
+                    word_properties["Nom. Sg.: m./f./n."] = NomGen["Nom"]
+                    word_properties["Gen. Sg.: m./f./n."] = NomGen["Gen"]
+
+            if "Substantiv".lower() in word["flexion"][0]["form"].lower():
+                failures = 2
+                for flexion in word["flexion"]:
+                    if flexion["form"] == "SubstantivForm(NOM,SG)":
+                        word_properties["Nom. Sg.: m./f./n."] = flexion["wort"][0].replace("‑","").lower()
+                        if not flexion["wort"][0].replace("‑","") == "":
+                            failures -= 1
+                    if flexion["form"] == "SubstantivForm(GEN,SG)":
+                        word_properties["Gen. Sg.: m./f./n."] = flexion["wort"][0].replace("‑","").lower()
+                        if not flexion["wort"][0].replace("‑","") == "":
+                            failures -= 1
+                if failures == 2:
+                    failures = 2
+                    for flexion in word["flexion"]:
+                        if flexion["form"] == "SubstantivForm(NOM,PL)":
+                            word_properties["Nom. Sg.: m./f./n."] = flexion["wort"][0].replace("‑","").lower() + " (Pl.)"
+                            if not flexion["wort"][0].replace("‑","") == "":
+                                failures -= 1
+                        if flexion["form"] == "SubstantivForm(GEN,PL)":
+                            word_properties["Gen. Sg.: m./f./n."] = flexion["wort"][0].replace("‑","").lower() + " (Pl.)"
+                            if not flexion["wort"][0].replace("‑","") == "":
+                                failures -= 1
+                
+                einzelne_worte = split_into_words([word["grundform"].replace("-", " - ")], delete_special_characters=False)
+                
+                if failures >= 2:
+                    dice("Fehler: Keine Nominativ- oder Genitivform gefunden", einzelne_worte[0], "bad")
+                
+            word_properties = vocab_abschluss(word_properties, word, anzahl_bedeutungen)
+            vocabulary["Pronomen"].append(word_properties)
+    
+    if Präpositionen == True:
+        for word in input["Präpositionen"]:
+            word_properties = {
+                "Präposition": "",
+                "Begleitkasus": ""
+            }
+
+
+            word_properties = simple_vocabs(word, "Praeposition", "Präposition", word_properties, anzahl_bedeutungen)
+            match = re.search(r'\((.*?)\)', word_properties["Bedeutung"])
+            for kasus in ["Akk", "Dat", "Abl"]:
+                if kasus.lower() in match.group(1).lower():
+                    word_properties["Bedeutung"] = re.sub(r'\(.*?\)', '', word_properties["Bedeutung"])
+                    word_properties["Begleitkasus"] = f"mit {kasus}."
+
+            vocabulary["Präpositionen"].append(word_properties)
+    if Adverbien == True:
+        vocabulary = simple_vocabs_full(vocabulary, input, "Adverbien", anzahl_bedeutungen)
+    if Konjunktionen == True:
+        vocabulary = simple_vocabs_full(vocabulary, input, "Konjunktionen", anzahl_bedeutungen)
+    if Subjunktionen == True:
+        vocabulary = simple_vocabs_full(vocabulary, input, "Subjunktionen", anzahl_bedeutungen)
+    if Unbekannt == True:
+        for word in input["Unbekannt"]:
+            word_properties = {
+                "Unbekannt": "",
+            }
+            try:
+                word_properties["Unbekannt"] = word["flexion"][0]["wort"][0].lower()
+            except:
+                None
+
+            word_properties = vocab_abschluss(word_properties, word, anzahl_bedeutungen)
+            vocabulary["Unbekannt"].append(word_properties)
     return vocabulary
 
+    
+
+    
 def save2json(file, data):
     with open(file,"w+",encoding='utf-8') as file:
         json.dump(data, file, ensure_ascii=False, indent=4)
@@ -563,7 +711,7 @@ def save2by2(excel_file, by2_filepath):
                 result_list.append(combined_str)
             antworten = result_list
         else:
-            antworten = df.iloc[:, 1].tolist()
+            antworten = df.iloc[:, 0].tolist()
             fragen = df.iloc[:, 1].tolist()
         # Speichere die Fragen und Antworten im Dictionary
         Data[sheet] = (fragen, antworten)
