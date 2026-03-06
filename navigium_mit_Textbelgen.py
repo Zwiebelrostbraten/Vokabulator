@@ -355,17 +355,39 @@ def advanced_formating(input, anzahl_bedeutungen=1, Nomen=True, Verben=True, Adj
                 dice("Fehler: Keine Nominativ- oder Genitivform gefunden", einzelne_worte[0], "bad")
 
             word_properties["Genus"] = einzelne_worte[-1]+"."
-            try:
-                if "Dritte Deklination".lower() in word["klassenlabel"].lower():
-                    word_properties["Dekl.-Kl."] = "kons.-Dekl."
+            
+            if "Substantiv".lower() in word["klassenlabel"].lower() or "Dritte Deklination".lower() in word["klassenlabel"].lower():
+                if word_properties["Gen. Sg."].endswith("is"):
                     for flexion in word["flexion"]:
-                        if flexion["form"] == "SubstantivForm(GEN,PL)":
+                        if flexion["form"] == "SubstantivForm(AKK,SG)":
+                            if flexion["wort"][0].endswith("im"):
+                                word_properties["Dekl.-Kl."] = "i-Dekl."
+                                break
+                        if flexion["form"] == "SubstantivForm(GEN,SG)":
                             if flexion["wort"][0].endswith("ium"):
                                 word_properties["Dekl.-Kl."] = "gem.-Dekl."
-                else:
-                    word_properties["Dekl.-Kl."] = word["klassenlabel"].replace(",", "").replace("(", "").replace(")", "")[:-7] + "."
-            except:
-                word_properties["Dekl.-Kl."] = "unbekannt"
+                                break
+                            else:
+                                word_properties["Dekl.-Kl."] = "kons.-Dekl."
+                                
+                for flexion in word["flexion"]:
+                    if flexion["form"] == "SubstantivForm(ABL,SG)":
+                        if flexion["wort"][0].endswith("a") and word_properties["Gen. Sg."].endswith("ae"):
+                            word_properties["Dekl.-Kl."] = "a-Dekl."
+                            break
+                        if flexion["wort"][0].endswith("o") and word_properties["Gen. Sg."].endswith("i"):
+                            word_properties["Dekl.-Kl."] = "o-Dekl."
+                            break
+                        if flexion["wort"][0].endswith("es") and word_properties["Gen. Sg."].endswith("ei"):
+                            word_properties["Dekl.-Kl."] = "e-Dekl."
+                            break
+                        if flexion["wort"][0].endswith("us") and word_properties["Gen. Sg."].endswith("us"):
+                            word_properties["Dekl.-Kl."] = "u-Dekl."
+                            break
+                if len(word_properties["Dekl.-Kl."]) <= 1 or "Substantiv".lower() in word_properties["Dekl.-Kl."].lower():
+                    word_properties["Dekl.-Kl."] = "unregelmäßig"
+            else:
+                word_properties["Dekl.-Kl."] = word["klassenlabel"].replace(" ", "").replace("neutr.", "").replace(",", "").replace("(", "").replace(")", "").replace("ination", ".")
             
             word_properties = vocab_abschluss(word_properties, word, anzahl_bedeutungen)
 
