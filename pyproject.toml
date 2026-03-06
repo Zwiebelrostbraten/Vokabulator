@@ -1,7 +1,7 @@
 [project]
 name = "text2vocabs-gui"
 version = "0.1.0"
-description = "Add your description here"
+description = "Ein kleines Windows Programm mit dem man aus lateinischen Texten Vokabellisten erstellen kann. "
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
