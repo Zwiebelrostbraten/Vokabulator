@@ -408,7 +408,34 @@ def advanced_formating(input, anzahl_bedeutungen=1, Nomen=True, Verben=True, Adj
                         word_properties["PPP"] = " / ".join(flexion["wort"]).replace("‑","").lower()
 
             if "Verb".lower() in word["klassenlabel"].lower():
-                word_properties["Konj."] = "unbekannt"
+                konj_props = [
+                    {
+                        "Inf": "are",
+                        "1PS": "o",
+                        "Konj": "a-Konj."
+                    },
+                    {
+                        "Inf": "ere",
+                        "1PS": "eo",
+                        "Konj": "e-Konj."
+                    },
+                    {
+                        "Inf": "ire",
+                        "1PS": "io",
+                        "Konj": "i-Konj."
+                    },
+                    {
+                        "Inf": "ere",
+                        "1PS": "io",
+                        "Konj": "kons. Konj. auf -io"
+                    }
+                ]
+                for konj in konj_props:
+                    if word_properties["Infinitiv"].endswith(konj["Inf"]) and word_properties["1. Ps. Sg. Präs. Ind. Akt."].endswith(konj["1PS"]):
+                        word_properties["Konj."] = konj["Konj"]
+                        break
+                    else:
+                        word_properties["Konj."] = "unbekannt"
             elif word["deponens"] == True:
                 word_properties["Konj."] = "Deponens"
             else:
